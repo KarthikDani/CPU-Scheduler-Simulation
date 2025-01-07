@@ -9,6 +9,11 @@ scheduler picks it up and P2, P3 entered the 'Ready' queue after that).
 Now a new process P4 with estimated completion time 6ms enters the 'Ready'
 queue after 5ms of scheduling P1.
 
+Draw Gantt Chart. Calculate the Waiting time and Turn Around Time (TAT) for
+each Process and the Average Waiting time and Turn Around Time. 
+
+(Assume there is no I/O waiting for the processes). Assume all the processes
+contain only CPU operation and no I/O operations involved.
 """
 
 from collections import deque # double ended queue
