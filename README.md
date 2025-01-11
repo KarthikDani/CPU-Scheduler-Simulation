@@ -7,6 +7,6 @@
 
 ## Round Robin with Same/Different Arrival Times
 
-1. Navigate tot [round_robin.py](round_robin.py)
+1. Navigate to [round_robin.py](round_robin.py)
 2. Fill up the first to last processes in order and all set to run!
 
