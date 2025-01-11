@@ -1,32 +1,17 @@
-"""
-Question:
-There are six processes named as P1, P2, P3, P4, P5 and P6. Their arrival time and burst time are given below.
-Time quantum of the system is 4 units. Assume system uses RR Scheduling.
-
-Process ID, Arrival Time,   Burst Time
-P1          0               5
-P2          1               6
-P3          2               3
-P4          3               1
-P5          4               5
-P6          6               4
-
-Show Gantt Chart. Calculate Avg. Waiting and Turn Around Time.
-"""
-
-
 from collections import deque
 import matplotlib.pyplot as plt
 
+# Define processes
 processes = [
-    {"pid": "P0", "arrival_time": 0, "burst_time": 80},
-    {"pid": "P1", "arrival_time": 10, "burst_time": 20},
-    {"pid": "P2", "arrival_time": 10, "burst_time": 10},
-    {"pid": "P3", "arrival_time": 80, "burst_time": 20},
-    {"pid": "P4", "arrival_time": 85, "burst_time": 50},
+    {"pid": "P1", "arrival_time": 0, "burst_time": 5},
+    {"pid": "P2", "arrival_time": 1, "burst_time": 6},
+    {"pid": "P3", "arrival_time": 2, "burst_time": 3},
+    {"pid": "P4", "arrival_time": 3, "burst_time": 1},
+    {"pid": "P5", "arrival_time": 4, "burst_time": 5},
+    {"pid": "P6", "arrival_time": 6, "burst_time": 4},
 ]
 
-time_quantum = 15
+time_quantum = 4
 
 # Round Robin implementation
 def round_robin(processes, time_quantum):
@@ -35,11 +20,10 @@ def round_robin(processes, time_quantum):
     gantt_chart = []
     completed_processes = []
     remaining_burst = {p["pid"]: p["burst_time"] for p in processes}
-
     processes.sort(key=lambda x: x["arrival_time"])  # Sort by arrival time
 
     while len(completed_processes) < len(processes):
-        # Add processes to the ready queue if they arrive
+        # Add newly arrived processes to the ready queue
         for process in processes:
             if (
                 process["arrival_time"] <= current_time
@@ -47,9 +31,7 @@ def round_robin(processes, time_quantum):
                 and process not in completed_processes
             ):
                 ready_queue.append(process)
-                # Debug
-                print(f"Time {current_time}: Process {process['pid']} added to the ready queue.")
-
+        
         if ready_queue:
             # Select the first process in the queue
             current_process = ready_queue.popleft()
@@ -60,28 +42,42 @@ def round_robin(processes, time_quantum):
 
             gantt_chart.append((current_process["pid"], start_time, current_time))
 
-            # Process completion check
+            # Check if the process is completed
             if remaining_burst[current_process["pid"]] == 0:
                 current_process["completion_time"] = current_time
                 completed_processes.append(current_process)
-                # Debug
-                print(f"Time {current_time}: Process {current_process['pid']} completed.")
             else:
-                ready_queue.append(current_process)  # Re-add to the queue if not finished
-            
+                # Re-check for new arrivals before re-adding the current process
+                # Add newly arrived processes first
+                # Re-check for new arrivals before re-adding the current process
+                new_processes = filter(
+                    lambda process: (
+                        process["arrival_time"] <= current_time
+                        and process not in ready_queue
+                        and process not in completed_processes
+                        and process != current_process  # Exclude the already executed process
+                    ),
+                    processes
+                )
+
+                # Add the filtered processes to the ready queue
+                for process in new_processes:
+                    ready_queue.append(process)
+                
+                # After adding new arrivals, append the current process at the end of the queue
+                ready_queue.append(current_process)
+                
         else:
             # CPU idle time
-            print(f"Time {current_time}: CPU is idle.")
+            gantt_chart.append(("Idle", current_time, current_time + 1))
             current_time += 1
-        
-        print("Ready: ", ready_queue)
 
     for process in completed_processes:
         process["turnaround_time"] = process["completion_time"] - process["arrival_time"]
         process["waiting_time"] = process["turnaround_time"] - process["burst_time"]
     return completed_processes, gantt_chart
 
-# Round Robin scheduling
+# Scheduling
 completed_processes, gantt_chart = round_robin(processes, time_quantum)
 
 # Calculate average times
@@ -116,25 +112,25 @@ def plot_gantt_chart_rr(gantt_chart):
 
     for idx, (pid, start, end) in enumerate(gantt_chart):
         ax.barh(
-            1, end - start, left=start, color="lightgreen", edgecolor="black", height=0.4
+            1, end - start, left=start, color="lightblue", edgecolor="black", height=0.4
         )
-        ax.text(
-            (start + end) / 2,
-            1,
-            pid,
-            ha="center",
-            va="center",
-            color="black",
-            fontsize=12,
-        )
-        ax.text(start, 1.05, f"{start}", ha="center", va="bottom", fontsize=10)
-        ax.text(end, 1.05, f"{end}", ha="center", va="bottom", fontsize=10)
+        if pid != "Idle":
+            ax.text(
+                (start + end) / 2,
+                1,
+                pid,
+                ha="center",
+                va="center",
+                color="black",
+                fontsize=10,
+            )
+        ax.text(start, 1.05, f"{start}", ha="center", va="bottom", fontsize=8)
+        ax.text(end, 1.05, f"{end}", ha="center", va="bottom", fontsize=8)
 
     ax.set_yticks([1])
     ax.set_yticklabels(["CPU"])
-    ax.set_xticks(range(0, max(end for _, _, end in gantt_chart) + 1))
-    ax.set_xlabel("Time (ms)")
-    ax.set_title(f"Gantt Chart - Round Robin Scheduling (Time Quantum = {time_quantum} ms)")
+    ax.set_xlabel("Time")
+    ax.set_title(f"Gantt Chart - Round Robin Scheduling (Time Quantum = {time_quantum})")
     ax.grid(axis="x", linestyle="--", alpha=0.6)
     plt.tight_layout()
     plt.show()
